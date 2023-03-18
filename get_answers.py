@@ -24,18 +24,19 @@ else:
                 question_id=get_question_id(main_div);print(Y+str(number)+")"+W,end=" ")
                 if question_id in data[test_id].keys():
                     info=data[test_id][question_id]#информация о конкретном вопросе
-                    content=main_div.find(class_="answer");question_type=get_question_type(content)
-                    if type(info)==dict:#группа combobox-ов
-                        print();subnumber=1;questions_content=sorted(get_subquestions_content(content))
-                        for subcontent in content.findAll("tr"):
-                            print(M+str(subnumber)+"."+W,end=" ")
-                            subquestion_number=questions_content.index(content_of(subcontent.find("p")))
-                            subinfo=info[subquestion_number]
-                            count=[len(subinfo[0]),len(subinfo[1])]
-                            answers_content=get_answers_content(subcontent)
-                            if count[0]>0:print(("похоже на то, что кто-то решил вас дезинформировать, поскольку в базе данных больше одного номера правильного подответа: "if count[0]>1 else"номер правильного подответа: ")+list_to_str(get_local_numbers(subinfo[0])))
-                            else:print("правильный подответ неизвестен. список номеров неправильных подответов: "+list_to_str(get_local_numbers(subinfo[1]),R))
-                            subnumber+=1
+                    content=main_div.find(class_="answer");question_type=get_question_type(main_div)
+                    if type(info)==dict:#вопрос с подответами
+                        if question_type=="combobox group":
+                            print();subnumber=1;questions_essence=sorted(get_subquestions_essence(content))
+                            for subcontent in content.findAll("tr"):
+                                print(M+str(subnumber)+"."+W,end=" ")
+                                subquestion_number=questions_essence.index(get_essence(subcontent.find("p")))
+                                subinfo=info[subquestion_number]
+                                count=[len(subinfo[0]),len(subinfo[1])]
+                                answers_content=get_answers_essence(subcontent)
+                                if count[0]>0:print(("похоже на то, что кто-то решил вас дезинформировать, поскольку в базе данных больше одного номера правильного подответа: "if count[0]>1 else"номер правильного подответа: ")+list_to_str(get_local_numbers(subinfo[0])))
+                                else:print("правильный подответ неизвестен. список номеров неправильных подответов: "+list_to_str(get_local_numbers(subinfo[1]),R))
+                                subnumber+=1
                     else:
                         count=[len(info[0]),len(info[1])]
                         if count[0]!=0 or count[1]!=0:
@@ -43,8 +44,8 @@ else:
                                 if count[0]>0:print(("похоже на то, что кто-то решил вас дезинформировать, поскольку в базе данных больше одного правильного ответа: "if count[0]>1 else "ответ: ")+list_to_str(info[0]))
                                 else:print("правильный ответ неизвестен. список неправильных ответов: "+list_to_str(info[1],R))
                             else:#ответ нужно выбрать из готовых вариантов
-                                if question_type=="combobox":answers_content=get_answers_content(main_div)
-                                elif question_type in["radiobutton","checkbox"]:answers_content=get_answers_content(content)
+                                if question_type=="combobox":answers_content=get_answers_essence(main_div)
+                                elif question_type in["radiobutton","checkbox"]:answers_content=get_answers_essence(content)
                                 if question_type in["radiobutton","combobox"]:
                                     if count[0]>0:print(("похоже на то, что кто-то решил вас дезинформировать, поскольку в базе данных больше одного номера правильного ответа: "if count[0]>1 else"номер правильного ответа: ")+list_to_str(get_local_numbers(info[0])))
                                     else:print("правильный ответ неизвестен. список номеров неправильных ответов: "+list_to_str(get_local_numbers(info[1]),R))

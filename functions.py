@@ -37,7 +37,8 @@ def merge_test_data(test_id,questions,data):#добавляет всю ту ин
                             for i in range(2):
                                 for value in questions[key][subkey][i]:
                                     if value not in data[test_id][key][subkey][i]:data[test_id][key][subkey][i].append(value)
-def content_of(element):return "".join([str(content)for content in element.contents])#возвращает контент элемента как строку
+#def content_of(element):return "".join([str(content)for content in element.contents])#возвращает контент элемента как строку. оказалось что при скачивании он может измениться, поэтому это бесполезно блять
+def get_essence(element):return element.get_text()if element.find("img")is None else element.find("img")["src"].split("/")[-1].split(".")[0]#возвращает то, чем элемент можно однозначно отличить от других (надеюсь блять)
 def open_code(path):return BeautifulSoup(open(path,"r",encoding="utf-8").read(),"html.parser")#открывает файл для парсинга
 #def get_test_id(soup):return int(str(soup.find("div",class_="que")).split("-")[1])#возвращает id теста dom.sustec. как оказалось это абсолютно бесполезная инфа
 def get_test_name(soup):return soup.find("meta",{"name":"keywords"}).get("content")[8:].split(":")[0].split(" (")[0]#возвращает название теста, сим используемое в качестве id
@@ -51,11 +52,12 @@ def get_grade(div):#возвращает правильность ответа �
         else:grade=0#ответ неправильный
     else:grade=None#ответ на вопрос не последовал
     return grade
-def get_question_type(content):#принимает результат поиска тега с классом answer
+def get_question_type(main_div):#принимает контейнер вопроса
     global type_;type_=None
+    content=main_div.find(class_="answer")
     if content is None:type_="combobox"
     else:
-        if content.name=="table":type_="combobox group"
+        if content.name=="table":type_="combobox group"if main_div.find(class_="matchorigin")is None else"drag group"
         else:
             if content.name=="div":
                 if content.find("input",{"type":"radio"})is not None:type_="radiobutton"
@@ -63,7 +65,11 @@ def get_question_type(content):#принимает результат поиск
             elif content.name=="span":type_="textbox"
     if type(type_)==None:print("неизвестный тип вопроса. свяжитесь со мной, мб мне будет не в падлу посмотреть чо вы пытаетесь запихать в мой скрипт, мб я добавлю поддержку этого.")
     else:return type_
-def get_subquestions_content(content):return[content_of(subcontent.find("p"))for subcontent in content.findAll("tr")]#возвращает список содержимого подвопросов
-def get_answers_content(content):#возвращает список возможных ответов или подответов
-    if type_ in["combobox group","combobox"]:return[content_of(option)for option in content.findAll("option")]
-    elif type_ in["radiobutton","checkbox"]:return[content_of(text)for text in content.findAll(class_="ml-1")]
+def get_subquestions_essence(content):return[get_essence(subcontent.find("p"))for subcontent in content.findAll("td",class_="text")]#возвращает список сути подвопросов
+def get_answers_essence(content):#возвращает список сути возможных ответов или подответов, в некоторых случаях словарь
+    if type_=="drag group":
+        output={}
+        for subcontent in content.findAll(class_="matchdrag"):output[int(subcontent["data-id"])]=get_essence(subcontent.find("p"))
+        return output
+    elif type_ in["combobox group","combobox"]:return[get_essence(option)for option in content.findAll("option")]
+    elif type_ in["radiobutton","checkbox"]:return[get_essence(text)for text in content.findAll(class_="ml-1")]
